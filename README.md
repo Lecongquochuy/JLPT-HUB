@@ -9,6 +9,7 @@ Hệ thống học **Từ Vựng, Ngữ Pháp & Đọc Hiểu JLPT (N5 – N1)**
 Toàn bộ các file tạm, dữ liệu trùng lặp và mã nguồn rối rắm đã được dọn dẹp và tách lớp theo chuẩn Modular:
 
 ```text
+
 JLPT-Hub/
 ├── index.html                  # Giao diện chính (Semantic HTML5 gọn nhẹ)
 ├── manifest.json               # Cấu hình Web App Manifest đạt chuẩn 100% PWABuilder / APK
@@ -66,21 +67,24 @@ flowchart TB
 ```
 
 ### Chi tiết 3 luồng vận hành:
+
 1. **Luồng Khởi động Tức thì (0ms Instant Boot)**:
-   * Khi bạn mở App trên điện thoại hoặc Web trên máy tính, ứng dụng hiển thị ngay lập tức từ bộ nhớ máy (`localStorage` + `Service Worker Cache`).
-   * Ngay sau đó 0.4 giây, `GitHubSync.pull()` âm thầm kiểm tra file `data/cloud_sync.json` trên GitHub để tải về từ vựng mới và tiến độ học tập mới nhất.
+   - Khi bạn mở App trên điện thoại hoặc Web trên máy tính, ứng dụng hiển thị ngay lập tức từ bộ nhớ máy (`localStorage` + `Service Worker Cache`).
+   - Ngay sau đó 0.4 giây, `GitHubSync.pull()` âm thầm kiểm tra file `data/cloud_sync.json` trên GitHub để tải về từ vựng mới và tiến độ học tập mới nhất.
 2. **Luồng Đồng bộ 2 chiều Tự động (Auto Push/Pull)**:
-   * **Thêm từ mới ở máy tính**: Bạn bấm `➕ Dán Data` trên Web ➔ Dữ liệu nạp vào máy và tự động đẩy thẳng lên `data/cloud_sync.json` trên GitHub ➔ Điện thoại mở App lên tự động nhận được toàn bộ từ mới mà **không bao giờ phải cài lại file APK**.
-   * **Học trên điện thoại**: Bạn bấm `⭐ Cần ôn` hoặc `✅ Đã thuộc` trên điện thoại ➔ Sau 1.2 giây (debounce chống nghẽn), App tự đẩy trạng thái mới lên GitHub ➔ Mở máy tính lên thấy khớp 100%.
+   - **Thêm từ mới ở máy tính**: Bạn bấm `➕ Dán Data` trên Web ➔ Dữ liệu nạp vào máy và tự động đẩy thẳng lên `data/cloud_sync.json` trên GitHub ➔ Điện thoại mở App lên tự động nhận được toàn bộ từ mới mà **không bao giờ phải cài lại file APK**.
+   - **Học trên điện thoại**: Bạn bấm `⭐ Cần ôn` hoặc `✅ Đã thuộc` trên điện thoại ➔ Sau 1.2 giây (debounce chống nghẽn), App tự đẩy trạng thái mới lên GitHub ➔ Mở máy tính lên thấy khớp 100%.
 3. **Luồng Chống Mất Mạng (Offline Resilience)**:
-   * Nếu bạn đang đi tàu xe không có mạng, mọi đánh dấu của bạn được ghi nhận trạng thái `⏳ Chờ đồng bộ`. Ngay khi điện thoại bắt được Wi-Fi/4G trở lại, sự kiện `window.ononline` tự động kích hoạt đẩy dữ liệu lên GitHub.
+   - Nếu bạn đang đi tàu xe không có mạng, mọi đánh dấu của bạn được ghi nhận trạng thái `⏳ Chờ đồng bộ`. Ngay khi điện thoại bắt được Wi-Fi/4G trở lại, sự kiện `window.ononline` tự động kích hoạt đẩy dữ liệu lên GitHub.
 
 ---
 
 ## 🚀 3. Hướng Dẫn Đưa Lên GitHub & Xuất File APK (Không Bị Lỗi 401)
 
 ### Bước 1: Đẩy thư mục lên GitHub và bật GitHub Pages (1 phút)
+
 Mở Terminal (PowerShell) tại thư mục `D:\JLPT-Hub` và chạy:
+
 ```powershell
 git init
 git add .
@@ -89,16 +93,19 @@ git branch -M main
 git remote add origin https://github.com/<USERNAME_CUA_BAN>/JLPT-Hub.git
 git push -u origin main
 ```
-* Vào trang Repository trên GitHub ➔ **Settings** ➔ **Pages** (menu bên trái).
-* Mục **Branch**, chọn nhánh `main` ➔ Bấm **Save**.
-* Sau 30 giây, bạn có đường link chính chủ công khai 100%: `https://<USERNAME_CUA_BAN>.github.io/JLPT-Hub/`.
+
+- Vào trang Repository trên GitHub ➔ **Settings** ➔ **Pages** (menu bên trái).
+- Mục **Branch**, chọn nhánh `main` ➔ Bấm **Save**.
+- Sau 30 giây, bạn có đường link chính chủ công khai 100%: `https://<USERNAME_CUA_BAN>.github.io/JLPT-Hub/`.
 
 ### Bước 2: Đóng gói thành file `.apk` chuẩn trên PWABuilder (1 phút)
+
 1. Mở [https://www.pwabuilder.com](https://www.pwabuilder.com) và dán link GitHub Pages ở Bước 1 vào.
 2. Vì GitHub Pages mở công khai (không chặn 401 như Netlify), PWABuilder sẽ đọc được ngay `manifest.json` và `sw.js`, chấm điểm **Xanh 100%**.
 3. Bấm **Package For Stores** ➔ Chọn **Android** ➔ **Download Package** để lấy file `.apk` cài vào điện thoại.
 
 ### Bước 3: Bật Đồng bộ 2 chiều (Nhập 1 lần duy nhất)
+
 1. Truy cập trang tạo Token nhanh của GitHub: [Tạo Personal Access Token (Classic)](https://github.com/settings/tokens/new?scopes=repo&description=JLPT-Hub-Sync).
 2. Tích chọn ô **`repo`** ➔ Cuộn xuống bấm **Generate token** ➔ Copy mã `ghp_...`.
 3. Mở Web trên máy tính và App trên điện thoại ➔ Bấm vào nút **`☁️ Cloud Sync`** trên thanh tiêu đề ➔ Dán mã Token vào và bấm **Lưu & Đồng bộ ngay**.
