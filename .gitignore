@@ -1,0 +1,11 @@
+# Bỏ qua thư mục chứa file sách PDF gốc nặng (~71MB) để GitHub & App tải siêu tốc
+data_pdf/
+
+# Hệ điều hành & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
+*.bak
+*.log

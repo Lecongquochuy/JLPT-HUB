@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>JLPT Smart Hub Pro - Học Từ Vựng, Ngữ Pháp & Đọc Hiểu Siêu Tốc</title>
+
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JLPT Hub">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Hệ thống tự học Từ Vựng, Ngữ Pháp & Đọc Hiểu JLPT N5 - N1 đồng bộ đám mây tự động qua GitHub">
+
+    <!-- App Icons & Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-title">
+            <h1>📚 JLPT Smart Hub Pro</h1>
+            <p>Hệ thống tự học Từ Vựng, Ngữ Pháp & Đọc Hiểu • N5 - N1 • Đồng bộ Cloud tự động</p>
+        </div>
+        <div class="header-actions">
+            <!-- Nút trạng thái Đồng bộ GitHub Cloud -->
+            <div class="sync-pill" id="syncStatusPill" onclick="openSyncModal()" title="Cấu hình & Đồng bộ dữ liệu qua GitHub">
+                <span class="sync-dot"></span>
+                <span id="syncStatusText">☁️ Cloud Sync</span>
+            </div>
+
+            <!-- Nút Cài đặt App PWA -->
+            <button class="btn btn-install" id="installAppBtn" onclick="installAppPrompt()" style="display: none;" title="Cài đặt ứng dụng về máy">
+                📲 Cài App
+            </button>
+
+            <!-- Nút Tiện ích trên Mobile -->
+            <button class="btn mobile-only" onclick="openUtilsModal()" title="Mở danh mục tiện ích">
+                ⚙️ Tiện ích
+            </button>
+
+            <!-- Thanh công cụ đầy đủ trên Desktop -->
+            <div class="header-actions desktop-only">
+                <a href="tools/pdf-converter.html" target="_blank" class="btn" style="background:#1e2d4a; color:var(--accent);" title="Mở công cụ trích xuất PDF tự động">⚡ Trích xuất PDF</a>
+                <button class="btn btn-amber" onclick="openFlashcardModal()">🎴 Luyện Flashcard</button>
+                <button class="btn" onclick="openQuizModal()">🎯 Trắc nghiệm 10 câu</button>
+                <button class="btn" id="flashcardBtn" onclick="toggleBlur()">🙈 Che nghĩa</button>
+                <button class="btn btn-primary" onclick="openModal()">➕ Dán Data</button>
+                <button class="btn" onclick="exportDataBackup()" title="Xuất dữ liệu dự phòng">💾 Backup</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3 Tab Chính -->
+    <div class="main-tabs">
+        <button class="tab-btn active" onclick="switchTab('vocab', this)">📖 Từ Vựng (<span id="count-vocab">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('grammar', this)">📐 Ngữ Pháp (<span id="count-grammar">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('reading', this)">📰 Đọc Hiểu (<span id="count-reading">0</span>)</button>
+    </div>
+
+    <!-- Thanh Công Cụ Lọc & Tìm Kiếm -->
+    <div class="toolbar">
+        <div class="toolbar-top">
+            <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm theo từ, Hiragana, âm Hán Việt, nghĩa, ví dụ, ghi chú..." oninput="handleSearchInput()">
+            <div class="filter-group">
+                <button class="filter-tag active" onclick="setStatusFilter('ALL', this)">Tất cả</button>
+                <button class="filter-tag" onclick="setStatusFilter('STARRED', this)">⭐ Cần ôn (<span id="count-starred">0</span>)</button>
+                <button class="filter-tag" onclick="setStatusFilter('LEARNING', this)">🎯 Đang học</button>
+                <button class="filter-tag" onclick="setStatusFilter('MASTERED', this)">✅ Đã thuộc (<span id="count-mastered">0</span>)</button>
+            </div>
+        </div>
+        <div class="toolbar-bottom">
+            <div class="level-group">
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-right:4px;">Cấp độ:</span>
+                <button class="level-btn" onclick="setLevel('ALL', this)">Tất cả</button>
+                <button class="level-btn" onclick="setLevel('N5', this)">N5 (<span id="lvl-cnt-N5">0</span>)</button>
+                <button class="level-btn" onclick="setLevel('N4', this)">N4 (<span id="lvl-cnt-N4">0</span>)</button>
+                <button class="level-btn" onclick="setLevel('N3', this)">N3 (<span id="lvl-cnt-N3">0</span>)</button>
+                <button class="level-btn active" onclick="setLevel('N2', this)">N2 (<span id="lvl-cnt-N2">0</span>)</button>
+                <button class="level-btn" onclick="setLevel('N1', this)">N1 (<span id="lvl-cnt-N1">0</span>)</button>
+            </div>
+            <div class="filter-group" id="tagFilterContainer" style="display:flex;"></div>
+        </div>
+    </div>
+
+    <!-- Dòng hiển thị trạng thái số lượng -->
+    <div class="status-bar">
+        <span id="displayCountInfo">Đang tải dữ liệu...</span>
+        <span style="color: var(--accent); cursor: pointer;" onclick="scrollToTop()">⬆️ Lên đầu trang</span>
+    </div>
+
+    <!-- Khu vực hiển thị nội dung -->
+    <div id="contentArea"></div>
+
+    <!-- Nút xem thêm khi có nhiều dữ liệu -->
+    <div class="load-more-container" id="loadMoreArea" style="display: none;">
+        <button class="load-more-btn" onclick="loadMore()">⬇️ Tải thêm (<span id="remainingCount"></span> còn lại)</button>
+    </div>
+</div>
+
+<!-- Modal Cấu Hình & Đồng Bộ Đám Mây GitHub -->
+<div class="modal" id="syncModal">
+    <div class="modal-content" style="max-width: 520px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="color: var(--accent);">☁️ Đồng Bộ Đám Mây Qua GitHub</h3>
+            <button class="icon-btn" onclick="closeSyncModal()" style="font-size: 1.25rem;">✕</button>
+        </div>
+        <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
+            Tự động đồng bộ 2 chiều từ vựng mới, dấu sao ⭐ và từ đã thuộc ✅ giữa Máy tính và Điện thoại.
+        </p>
+
+        <div id="syncModalStatusText" class="note-box" style="margin-bottom: 14px; line-height: 1.6;"></div>
+
+        <!-- Nút thao tác nhanh Pull / Push -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+            <button class="btn" style="flex: 1; justify-content: center;" onclick="GitHubSync.pull(false)">
+                ⬇️ Tải từ Cloud về máy
+            </button>
+            <button class="btn btn-amber" style="flex: 1; justify-content: center;" onclick="GitHubSync.push(false)">
+                ⬆️ Đẩy từ máy lên Cloud
+            </button>
+        </div>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 14px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label class="form-label">GitHub Username</label>
+                    <input type="text" id="ghOwnerInput" class="form-input" placeholder="VD: Huy-21522145">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tên Repository</label>
+                    <input type="text" id="ghRepoInput" class="form-input" placeholder="VD: JLPT-Hub">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nhánh (Branch)</label>
+                <input type="text" id="ghBranchInput" class="form-input" placeholder="main" value="main">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    Personal Access Token (Quyền <code>repo</code> hoặc <code>contents: write</code>)
+                </label>
+                <input type="password" id="ghTokenInput" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+                    🔒 Token chỉ lưu duy nhất trong bộ nhớ trình duyệt trên thiết bị của bạn để gọi thẳng tới GitHub API.
+                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=JLPT-Hub-Sync" target="_blank" style="color: var(--accent);">Lấy Token nhanh tại đây ↗</a>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+            <button class="btn" onclick="closeSyncModal()">Đóng</button>
+            <button class="btn btn-success" onclick="saveSyncSettings()">💾 Lưu & Đồng bộ ngay</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nhập Nhanh JSON -->
+<div class="modal" id="importModal">
+    <div class="modal-content">
+        <h3>➕ Dán dữ liệu JSON từ Agent</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">
+            Dán khối JSON do JLPT Data Agent hoặc PDF Converter tạo ra vào đây. Dữ liệu sẽ nạp ngay lập tức và tự động đồng bộ lên GitHub.
+        </p>
+        <textarea id="jsonInput" placeholder='{ "vocab": [...], "grammar": [...], "reading": [...] }'></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Mẹo: Tự động đồng bộ sang điện thoại qua <code>data/cloud_sync.json</code></span>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="closeModal()">Đóng</button>
+                <button class="btn btn-success" onclick="importJSON()">Lưu & Đồng bộ ngay</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Luyện Flashcard -->
+<div class="modal" id="flashcardModal">
+    <div class="modal-content" style="max-width: 550px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: var(--accent);">🎴 Luyện tập Flashcard</h3>
+            <button class="icon-btn" onclick="closeFlashcardModal()" style="font-size: 1.2rem;">✕</button>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 10px;">
+            Chạm để lật thẻ • Vuốt trái/phải (hoặc phím mũi tên) để chuyển thẻ
+        </p>
+
+        <div class="fc-box" onclick="flipCurrentCard()">
+            <div class="fc-inner" id="fcInner">
+                <div class="fc-front">
+                    <span class="badge level" id="fcLevel" style="margin-bottom: 15px;">N2</span>
+                    <div class="fc-word" id="fcWord">--</div>
+                    <div class="fc-hanviet" id="fcHanviet">--</div>
+                    <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-muted);">👉 Chạm để xem cách đọc & nghĩa</div>
+                </div>
+                <div class="fc-back">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span class="fc-reading" id="fcReading">--</span>
+                        <button class="icon-btn" onclick="speakCurrentCard(event)" title="Nghe phát âm">🔊</button>
+                    </div>
+                    <div class="fc-meaning" id="fcMeaning">--</div>
+                    <div id="fcExample" style="font-size: 0.88rem; color: #bae6fd; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px; margin-top: 8px; max-width: 90%;">--</div>
+                    <div id="fcNote" style="font-size: 0.78rem; color: #94a3b8; margin-top: 8px; max-width: 90%;">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fc-controls">
+            <button class="btn" onclick="prevCard()">⬅️ Thẻ trước</button>
+            <span id="fcProgress" style="font-size: 0.9rem; font-weight: 700; color: var(--accent);">0 / 0</span>
+            <button class="btn" onclick="nextCard()">Thẻ sau ➡️</button>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
+            <button class="btn btn-amber" onclick="shuffleCards()">🔀 Xáo trộn thứ tự</button>
+            <button class="btn" onclick="toggleStarCurrentCard()">⭐ Đánh dấu cần ôn</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Trắc nghiệm (Duolingo Style Step-by-Step) -->
+<div class="modal" id="quizModal">
+    <div class="quiz-modal-content">
+        <div class="quiz-header">
+            <div class="quiz-stats">
+                <span class="quiz-stat-pill" style="color:var(--accent);">
+                    🎯 <span id="quizStepText">Câu 1/10</span>
+                </span>
+                <span class="quiz-stat-pill" style="color:var(--accent-amber);">
+                    🔥 Chuỗi: <strong id="quizStreakText">0</strong>
+                </span>
+                <span class="quiz-stat-pill" style="color:var(--accent-green);">
+                    ⭐ Điểm: <strong id="quizScoreText">0</strong>
+                </span>
+            </div>
+            <button class="icon-btn" onclick="closeQuizModal()" style="font-size: 1.25rem;">✕</button>
+        </div>
+
+        <div class="quiz-progress-track">
+            <div class="quiz-progress-fill" id="quizProgressBar"></div>
+        </div>
+
+        <div id="quizQuestionScreen">
+            <div class="quiz-question-card">
+                <div class="quiz-q-num">
+                    <span class="badge level" id="quizCardLevel">N2</span>
+                    <span id="quizCardSource" style="font-size:0.75rem; color:var(--text-muted);">JLPT</span>
+                </div>
+                <div class="quiz-target-word">
+                    <span id="quizCardWord">--</span>
+                    <button class="icon-btn" onclick="speakQuizWord()" title="Nghe phát âm" style="font-size: 1.3rem;">🔊</button>
+                </div>
+                <div id="quizCardHanviet" class="quiz-target-hanviet">--</div>
+                <div class="quiz-q-prompt">👉 Hãy chọn nghĩa tiếng Việt chính xác nhất:</div>
+            </div>
+
+            <div class="quiz-options-grid" id="quizOptionsContainer"></div>
+
+            <div class="quiz-feedback-box" id="quizFeedbackBox">
+                <div class="quiz-feedback-status" id="quizFeedbackStatus"></div>
+                <div class="quiz-feedback-details" id="quizFeedbackDetails"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <button class="btn" onclick="starQuizWord()" id="quizStarBtn">⭐ Lưu từ này</button>
+                <button class="btn btn-primary" id="quizNextBtn" onclick="nextQuizQuestion()" style="display: none; padding: 10px 24px; font-size: 1rem;">
+                    Câu tiếp theo ➔
+                </button>
+            </div>
+        </div>
+
+        <div id="quizSummaryScreen" class="quiz-summary-card" style="display: none;">
+            <div class="quiz-score-circle">
+                <span id="quizFinalPercent" style="font-size: 1.7rem; color: var(--accent);">100%</span>
+                <span id="quizFinalRatio" style="font-size: 0.8rem; color: var(--text-muted);">10/10 đúng</span>
+            </div>
+            <h3 id="quizTitleEvaluation" style="color: #fff; margin-bottom: 6px;">🎉 Xuất sắc!</h3>
+            <p id="quizDescEvaluation" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                Bạn đã nắm rất vững các từ vựng này. Hãy tiếp tục phát huy nhé!
+            </p>
+
+            <div style="text-align: left; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+                📋 Danh sách từ vừa làm:
+            </div>
+            <div class="quiz-review-list" id="quizReviewList"></div>
+
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="btn btn-amber" onclick="restartQuizWithFailedWords()" id="quizRetryFailedBtn" style="display: none;">
+                    💪 Luyện lại các câu sai
+                </button>
+                <button class="btn btn-primary" onclick="openQuizModal()">
+                    🔄 Làm bài mới (10 câu)
+                </button>
+                <button class="btn" onclick="closeQuizModal()">
+                    ✕ Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tiện Ích Đầy Đủ -->
+<div class="modal" id="utilsModal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="color: var(--accent);">⚙️ Tiện ích & Hệ thống</h3>
+            <button class="icon-btn" onclick="closeUtilsModal()" style="font-size: 1.25rem;">✕</button>
+        </div>
+
+        <div class="util-list">
+            <div class="util-item" onclick="openSyncModal()">
+                <div class="util-icon">☁️</div>
+                <div>
+                    <div>Đồng bộ Đám mây GitHub (Cloud Sync)</div>
+                    <div class="util-desc">Cấu hình Token & đồng bộ tự động giữa Web và Điện thoại</div>
+                </div>
+            </div>
+
+            <div class="util-item" onclick="installAppPrompt()">
+                <div class="util-icon">📲</div>
+                <div>
+                    <div>Cài đặt App lên Điện thoại / Máy tính</div>
+                    <div class="util-desc">Tạo icon ngoài màn hình, mở full-screen, chạy 100% offline</div>
+                </div>
+            </div>
+
+            <div class="util-item" onclick="closeUtilsModal(); openModal();">
+                <div class="util-icon">➕</div>
+                <div>
+                    <div>Dán dữ liệu JSON từ Agent</div>
+                    <div class="util-desc">Nạp từ vựng, ngữ pháp mới và tự đẩy lên GitHub</div>
+                </div>
+            </div>
+
+            <div class="util-item" onclick="exportDataBackup()">
+                <div class="util-icon">💾</div>
+                <div>
+                    <div>Xuất file Sao Lưu (Backup JSON)</div>
+                    <div class="util-desc">Tải về toàn bộ dữ liệu và tiến độ đánh dấu của bạn</div>
+                </div>
+            </div>
+
+            <a class="util-item" href="tools/pdf-converter.html" target="_blank" onclick="closeUtilsModal()">
+                <div class="util-icon">⚡</div>
+                <div>
+                    <div>Công cụ Trích xuất PDF tự động</div>
+                    <div class="util-desc">Chuyển đổi sách giáo trình PDF thành dữ liệu JSON chuẩn</div>
+                </div>
+            </a>
+
+            <div class="util-item" onclick="clearAppCache()">
+                <div class="util-icon">🧹</div>
+                <div>
+                    <div>Làm mới App & Xóa bộ nhớ đệm (Cache)</div>
+                    <div class="util-desc">Tải lại phiên bản mới nhất từ kho lưu trữ GitHub</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 10px;">
+            <button class="btn" onclick="closeUtilsModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Hướng dẫn Cài App -->
+<div class="modal" id="installGuideModal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="color: var(--accent);">📲 Hướng Dẫn Cài Đặt App</h3>
+            <button class="icon-btn" onclick="closeInstallGuide()" style="font-size: 1.25rem;">✕</button>
+        </div>
+
+        <div style="margin: 14px 0; font-size: 0.92rem; line-height: 1.6;">
+            <h4 style="color: var(--accent-green); margin-bottom: 6px;">🤖 Dành cho Android (Chrome / Edge):</h4>
+            <ol style="padding-left: 20px; color: #cbd5e1; margin-bottom: 16px;">
+                <li>Nhấn nút <strong>"📲 Cài App"</strong> hoặc dấu <strong>3 chấm (⋮)</strong> ở góc trên bên phải trình duyệt.</li>
+                <li>Chọn <strong>"Cài đặt ứng dụng" (Install App)</strong>.</li>
+                <li>Hoặc đóng gói file <code>.apk</code> qua <strong>PWABuilder</strong> từ link GitHub Pages của bạn.</li>
+            </ol>
+
+            <h4 style="color: var(--accent-amber); margin-bottom: 6px;">🍏 Dành cho iPhone / iPad (Safari):</h4>
+            <ol style="padding-left: 20px; color: #cbd5e1;">
+                <li>Mở trang web bằng <strong>Safari</strong> ➔ Nhấn nút <strong>Chia sẻ (Share ⬆️)</strong>.</li>
+                <li>Chọn <strong>"Thêm vào MH chính" (Add to Home Screen ➕)</strong> ➔ Nhấn <strong>Thêm</strong>.</li>
+            </ol>
+        </div>
+
+        <div style="text-align: right;">
+            <button class="btn btn-primary" onclick="closeInstallGuide()">Đã hiểu 👍</button>
+        </div>
+    </div>
+</div>
+
+<!-- Thanh Điều Hướng Dưới Đáy Cho Điện Thoại -->
+<nav class="mobile-bottom-nav">
+    <button class="nav-item active" onclick="handleNavHome(event)">
+        <span class="nav-icon">📚</span>
+        <span>Học</span>
+    </button>
+    <button class="nav-item" onclick="openFlashcardModal()">
+        <span class="nav-icon">🎴</span>
+        <span>Flashcard</span>
+    </button>
+    <button class="nav-item" onclick="openQuizModal()">
+        <span class="nav-icon">🎯</span>
+        <span>Trắc nghiệm</span>
+    </button>
+    <button class="nav-item" id="mobileBlurNavBtn" onclick="toggleBlur()">
+        <span class="nav-icon" id="mobileBlurIcon">🙈</span>
+        <span id="mobileBlurLabel">Che nghĩa</span>
+    </button>
+    <button class="nav-item" onclick="openUtilsModal()">
+        <span class="nav-icon">⚙️</span>
+        <span>Tiện ích</span>
+    </button>
+</nav>
+
+<!-- 1. Tải Kho Dữ Liệu Cốt Lõi Theo Cấp Độ -->
+<script src="data/n5.js"></script>
+<script src="data/n4.js"></script>
+<script src="data/n3.js"></script>
+<script src="data/n2.js"></script>
+<script src="data/n1.js"></script>
+
+<!-- 2. Tải Engine Đồng Bộ GitHub & Logic Ứng Dụng -->
+<script src="assets/js/github-sync.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
